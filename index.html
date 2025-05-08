@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SEUM Level Rankings</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Hardest Seum Levels List</h1>
+  <div id="level-list"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsE0X-g-7iaxSUsfZSsipbbm9oVzx20G0",
+      authDomain: "seum-level-list.firebaseapp.com",
+      projectId: "seum-level-list",
+      storageBucket: "seum-level-list.firebasestorage.app",
+      messagingSenderId: "488409597257",
+      appId: "1:488409597257:web:edbae88fed5c0be54b8698"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Load levels from Firestore
+    async function loadLevels() {
+      const container = document.getElementById("level-list");
+      container.innerHTML = "";
+
+      const snapshot = await db.collection("levels").orderBy("votes", "desc").get();
+
+      snapshot.forEach(doc => {
+        const level = doc.data();
+        const div = document.createElement("div");
+        div.className = "level";
+
+        div.innerHTML = `
+          <div class="level-thumbnail">
+            <iframe width="200" height="113" src="${level.youtube}" frameborder="0" allowfullscreen></iframe>
+          </div>
+          <div class="level-info">
+            <h3>${level.title}</h3>
+            <p>${level.description}</p>
+            <p>Votes: <span id="votes-${doc.id}">${level.votes ?? 0}</span></p>
+            <button onclick="vote('${doc.id}', 1)">👍 Upvote</button>
+            <button onclick="vote('${doc.id}', -1)">👎 Downvote</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Voting logic
+   function vote(id, change) {
+  const votedKey = `voted-${id}`;
+  const previousVote = localStorage.getItem(votedKey);
+
+  if (previousVote === String(change)) {
+    // Undo the vote
+    db.collection("levels").doc(id).update({
+      votes: firebase.firestore.FieldValue.increment(-change)
+    }).then(() => {
+      localStorage.removeItem(votedKey);
+      loadLevels();
+    });
+  } else {
+    let totalChange = change;
+    if (previousVote) {
+      // Change vote from +1 to -1 or vice versa
+      totalChange = change * 2;
+    }
+
+    db.collection("levels").doc(id).update({
+      votes: firebase.firestore.FieldValue.increment(totalChange)
+    }).then(() => {
+      localStorage.setItem(votedKey, change);
+      loadLevels();
+    });
+  }
+}
+
+
+    loadLevels();
+  </script>
+</body>
+</html>
