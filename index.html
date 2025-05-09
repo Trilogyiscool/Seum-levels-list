@@ -40,16 +40,19 @@
         const div = document.createElement("div");
         div.className = "level";
 
+        const votedKey = `voted-${doc.id}`;
+        const userVote = localStorage.getItem(votedKey);
+
         div.innerHTML = `
           <div class="level-thumbnail">
             <iframe width="200" height="113" src="${level.youtube}" frameborder="0" allowfullscreen></iframe>
           </div>
           <div class="level-info">
-            <h3>${level.title}</h3>
+            <h3><a href="level.html?id=${doc.id}">${level.title}</a></h3>
             <p>${level.description}</p>
             <p>Votes: <span id="votes-${doc.id}">${level.votes ?? 0}</span></p>
-            <button onclick="vote('${doc.id}', 1)">👍 Upvote</button>
-            <button onclick="vote('${doc.id}', -1)">👎 Downvote</button>
+            <button class="${userVote === '1' ? 'voted' : ''}" onclick="vote('${doc.id}', 1)">👍 Upvote</button>
+            <button class="${userVote === '-1' ? 'voted' : ''}" onclick="vote('${doc.id}', -1)">👎 Downvote</button>
           </div>
         `;
         container.appendChild(div);
@@ -57,34 +60,33 @@
     }
 
     // Voting logic
-   function vote(id, change) {
-  const votedKey = `voted-${id}`;
-  const previousVote = localStorage.getItem(votedKey);
+    function vote(id, change) {
+      const votedKey = `voted-${id}`;
+      const previousVote = localStorage.getItem(votedKey);
 
-  if (previousVote === String(change)) {
-    // Undo the vote
-    db.collection("levels").doc(id).update({
-      votes: firebase.firestore.FieldValue.increment(-change)
-    }).then(() => {
-      localStorage.removeItem(votedKey);
-      loadLevels();
-    });
-  } else {
-    let totalChange = change;
-    if (previousVote) {
-      // Change vote from +1 to -1 or vice versa
-      totalChange = change * 2;
+      if (previousVote === String(change)) {
+        // Undo the vote
+        db.collection("levels").doc(id).update({
+          votes: firebase.firestore.FieldValue.increment(-change)
+        }).then(() => {
+          localStorage.removeItem(votedKey);
+          loadLevels();
+        });
+      } else {
+        let totalChange = change;
+        if (previousVote) {
+          // Change vote from +1 to -1 or vice versa
+          totalChange = change * 2;
+        }
+
+        db.collection("levels").doc(id).update({
+          votes: firebase.firestore.FieldValue.increment(totalChange)
+        }).then(() => {
+          localStorage.setItem(votedKey, change);
+          loadLevels();
+        });
+      }
     }
-
-    db.collection("levels").doc(id).update({
-      votes: firebase.firestore.FieldValue.increment(totalChange)
-    }).then(() => {
-      localStorage.setItem(votedKey, change);
-      loadLevels();
-    });
-  }
-}
-
 
     loadLevels();
   </script>

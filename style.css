@@ -30,3 +30,7 @@ button {
   border-radius: 4px;
   cursor: pointer;
 }
+.voted {
+  color: orange;
+  font-weight: bold;
+}
