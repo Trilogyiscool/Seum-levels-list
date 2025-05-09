@@ -34,3 +34,18 @@ button {
   color: orange;
   font-weight: bold;
 }
+
+<style>
+  a {
+    color: white;
+    text-decoration: none;
+  }
+
+  a:visited {
+    color: white;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
